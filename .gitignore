@@ -36,3 +36,5 @@ _build/MFAAvalonia-2.16.2/**/*.tar.gz
 *.dll
 *.pdb
 *.node
+/MFAAvalonia.deps.json
+/MFAAvalonia.runtimeconfig.json
