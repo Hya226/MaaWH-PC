@@ -24,10 +24,7 @@
     </UserControl.Styles>
     <Grid Margin="20,16" RowDefinitions="Auto,Auto,*">
         <TextBlock Text="小工具" FontSize="22" FontWeight="Bold" />
-        <TextBlock Grid.Row="1" Margin="0,6,0,12" TextWrapping="Wrap" Opacity="0.75"
-                   Text="手机端 MaaWH 的两个识别工具的 PC 端。使用前提：模拟器已连接、游戏停在对应页面；与主队列互斥，运行期间不能同时跑主页队列。" />
-
-        <TabControl Grid.Row="2">
+        <TabControl Grid.Row="1" Margin="0,6,0,0">
             <!-- ============ 外勤见闻识别 ============ -->
             <TabItem Header="外勤见闻识别">
                 <Grid Margin="4,12,4,0" RowDefinitions="Auto,*">
