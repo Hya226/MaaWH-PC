@@ -24,7 +24,7 @@
     </UserControl.Styles>
     <Grid Margin="20,16" RowDefinitions="Auto,Auto,*">
         <TextBlock Text="小工具" FontSize="22" FontWeight="Bold" />
-        <TabControl Grid.Row="1" Margin="0,6,0,0">
+        <TabControl Grid.Row="2">
             <!-- ============ 外勤见闻识别 ============ -->
             <TabItem Header="外勤见闻识别">
                 <Grid Margin="4,12,4,0" RowDefinitions="Auto,*">
