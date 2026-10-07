@@ -2782,7 +2782,7 @@ public class MaaProcessor
             Instances.RootViewModel.ShowResourceKeyAndFallBack(name, back);
         if (!string.IsNullOrWhiteSpace(version) && !version.Equals("debug", StringComparison.OrdinalIgnoreCase))
         {
-            Instances.RootViewModel.ShowResourceVersion(version);
+            // 标题不追加资源版本号（只保留设置页的显示）
             Instances.VersionUpdateSettingsUserControlModel.ResourceVersion = version;
 
             // 首次初始化时，根据资源版本自动设置更新来源
