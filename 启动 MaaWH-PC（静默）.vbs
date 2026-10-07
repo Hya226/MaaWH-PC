@@ -1,4 +1,7 @@
-' MaaWH-PC 静默启动器：隐藏窗口执行启动脚本（同步清单 + 设便携 .NET + 启动 GUI）
-Set sh = CreateObject("Wscript.Shell")
-sh.CurrentDirectory = "E:\MaaWH-PC"
-sh.Run "E:\MaaWH-PC\start_maawh.bat", 0, False
+Set fso = CreateObject("Scripting.FileSystemObject")
+Set sh = CreateObject("Wscript.Shell")
+dir = fso.GetParentFolderName(WScript.ScriptFullName)
+sh.CurrentDirectory = dir
+sh.Run "powershell -NoProfile -ExecutionPolicy Bypass -File " & Chr(34) & dir & "\scripts\sync_interface.ps1" & Chr(34), 0, True
+sh.Environment("PROCESS")("DOTNET_ROOT") = dir & "\dotnet"
+sh.Run Chr(34) & dir & "\MFAAvalonia.exe" & Chr(34), 0, False
