@@ -76,8 +76,7 @@ public partial class WaiQinToolViewModel : ObservableObject
         RunCommand = new RelayCommand(() => _ = RunOrStopAsync());
     }
 
-    public string Intro =>
-        "停在游戏【外勤见闻】列表页第一页后运行：自动翻页 OCR 全部标题，对比名单报告本轮未出现的见闻（手机端 WaiQinScan 的移植）。全程只读浏览，不做领取操作。";
+    public string Intro => "停在游戏【外勤见闻】列表页第一页后运行";
 
     /// <summary>是否可运行（抽卡栏目占位置灰的对照）</summary>
     public bool IsAvailable => true;
