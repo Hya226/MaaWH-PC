@@ -19,6 +19,10 @@ def main() -> int:
     data = json.loads(SRC.read_text(encoding="utf-8"))
     for r in data.get("resource", []):
         r["path"] = ["{PROJECT_DIR}/whmx"]
+    # PC 端组名显示转换：tools 组在 PC 上定位为「额外队列」（手机端不受影响）
+    for g in data.get("group", []):
+        if g.get("name") == "tools":
+            g["label"] = "额外队列"
     data["description"] = (
         "MaaWH 的《物华弥新》任务包（PC 端：MaaFramework + MuMu 模拟器；"
         "与本机 E:\\MaaWH\\whmx 共享同一源，本文件由 scripts/sync_interface.py 生成，勿手改）"
