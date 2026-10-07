@@ -2778,8 +2778,7 @@ public class MaaProcessor
         {
             (name, back, version, customTitle, fallback) = ReadInterface();
         }
-        if ((!string.IsNullOrWhiteSpace(name) && !name.Equals("debug", StringComparison.OrdinalIgnoreCase)) || !string.IsNullOrWhiteSpace(back))
-            Instances.RootViewModel.ShowResourceKeyAndFallBack(name, back);
+        // 标题不显示资源名（「物华弥新」来自 interface.json 的 label，PC 端标题只留 MaaWH）
         if (!string.IsNullOrWhiteSpace(version) && !version.Equals("debug", StringComparison.OrdinalIgnoreCase))
         {
             // 标题不追加资源版本号（只保留设置页的显示）
