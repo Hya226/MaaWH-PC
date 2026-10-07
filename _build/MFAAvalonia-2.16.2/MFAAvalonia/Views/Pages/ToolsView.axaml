@@ -1,0 +1,329 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="clr-namespace:MFAAvalonia.ViewModels.Pages"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+             x:Class="MFAAvalonia.Views.Pages.ToolsView"
+             x:DataType="vm:ToolsViewModel">
+    <UserControl.Styles>
+        <Style Selector="TextBlock.waiLine">
+            <Setter Property="Foreground" Value="#E5636F" />
+        </Style>
+        <Style Selector="TextBlock.dianWarn">
+            <Setter Property="Foreground" Value="#E8A33B" />
+        </Style>
+        <Style Selector="Button.upOn">
+            <Setter Property="Background" Value="#66E8B34B" />
+            <Setter Property="Foreground" Value="#FFE8B34B" />
+            <Setter Property="Content" Value="UP ✓" />
+        </Style>
+        <Style Selector="Button:not(.upOn)">
+            <Setter Property="Content" Value="UP" />
+        </Style>
+    </UserControl.Styles>
+    <Grid Margin="20,16" RowDefinitions="Auto,Auto,*">
+        <TextBlock Text="小工具" FontSize="22" FontWeight="Bold" />
+        <TextBlock Grid.Row="1" Margin="0,6,0,12" TextWrapping="Wrap" Opacity="0.75"
+                   Text="手机端 MaaWH 的两个识别工具的 PC 端。使用前提：模拟器已连接、游戏停在对应页面；与主队列互斥，运行期间不能同时跑主页队列。" />
+
+        <TabControl Grid.Row="2">
+            <!-- ============ 外勤见闻识别 ============ -->
+            <TabItem Header="外勤见闻识别">
+                <Grid Margin="4,12,4,0" RowDefinitions="Auto,*">
+                    <Grid ColumnDefinitions="Auto,*,Auto" Margin="0,0,0,8">
+                        <Button Content="{Binding WaiQin.RunLabel}" MinWidth="88"
+                                Command="{Binding WaiQin.RunCommand}" />
+                        <StackPanel Grid.Column="1" Margin="12,0,8,0" VerticalAlignment="Center">
+                            <TextBlock Text="{Binding WaiQin.StatusText}" FontWeight="SemiBold"
+                                       TextTrimming="CharacterEllipsis" />
+                            <TextBlock Text="{Binding WaiQin.Intro}" Opacity="0.65" FontSize="12"
+                                       TextWrapping="Wrap" />
+                        </StackPanel>
+                        <Button Grid.Column="2" Content="复制结果" MinWidth="76"
+                                VerticalAlignment="Center"
+                                Command="{Binding WaiQin.CopyResultCommand}"
+                                IsEnabled="{Binding WaiQin.HasResult}" />
+                    </Grid>
+
+                    <!-- 左：实时扫描日志 | 右：结果与分析 -->
+                    <Grid Grid.Row="1" ColumnDefinitions="*,10,340">
+                        <Border CornerRadius="6" BorderThickness="1" BorderBrush="#33808080"
+                                Padding="4">
+                            <ListBox x:Name="WaiQinLogList" ItemsSource="{Binding WaiQin.Logs}">
+                                <ListBox.ItemTemplate>
+                                    <DataTemplate x:DataType="vm:ToolLogLine">
+                                        <TextBlock TextWrapping="Wrap">
+                                            <Run Text="{Binding Time}" Foreground="#66808080" />
+                                            <Run Text="  " />
+                                            <Run Text="{Binding Text}" Foreground="{Binding Color}" />
+                                        </TextBlock>
+                                    </DataTemplate>
+                                </ListBox.ItemTemplate>
+                            </ListBox>
+                        </Border>
+
+                        <Grid Grid.Column="2" RowDefinitions="Auto,*" Margin="0,0,0,4">
+                            <StackPanel IsVisible="{Binding WaiQin.HasResult}">
+                                <TextBlock Text="{Binding WaiQin.Result.Summary}" FontWeight="Bold"
+                                           FontSize="15" TextWrapping="Wrap" />
+                                <TextBlock Text="{Binding WaiQin.Result.ExportNote}" Opacity="0.5"
+                                           FontSize="12" TextWrapping="Wrap" Margin="0,4,0,0" />
+                            </StackPanel>
+                            <TextBlock Grid.Row="1" Text="运行后此处显示扫描结果与分析"
+                                       Opacity="0.45" HorizontalAlignment="Center"
+                                       VerticalAlignment="Center" TextWrapping="Wrap"
+                                       IsVisible="{Binding !WaiQin.HasResult}" />
+                            <ListBox Grid.Row="1" ItemsSource="{Binding WaiQin.Result.Missing}"
+                                     Margin="0,8,0,0" IsVisible="{Binding WaiQin.HasResult}">
+                                <ListBox.ItemTemplate>
+                                    <DataTemplate>
+                                        <TextBlock Text="{Binding}" TextWrapping="Wrap" />
+                                    </DataTemplate>
+                                </ListBox.ItemTemplate>
+                            </ListBox>
+                        </Grid>
+                    </Grid>
+                </Grid>
+            </TabItem>
+
+            <!-- ============ 抽卡识别（左：操作+日志 | 右：分析+明细） ============ -->
+            <TabItem Header="抽卡识别">
+                <Grid Margin="4,12,4,0" ColumnDefinitions="360,10,*">
+                    <!-- ===== 左列：操作区 + 抓取日志 ===== -->
+                    <Grid RowDefinitions="Auto,Auto,Auto,Auto,*">
+                        <Grid ColumnDefinitions="Auto,*" Margin="0,0,0,8">
+                            <Button Content="{Binding Gacha.RunLabel}" MinWidth="88"
+                                    Command="{Binding Gacha.RunCommand}" />
+                            <StackPanel Grid.Column="1" Margin="12,0,0,0" VerticalAlignment="Center">
+                                <TextBlock Text="{Binding Gacha.StatusText}" FontWeight="SemiBold"
+                                           TextTrimming="CharacterEllipsis" />
+                                <TextBlock Text="{Binding Gacha.LibrarySummary}" Opacity="0.65" FontSize="12"
+                                           TextWrapping="Wrap" />
+                            </StackPanel>
+                        </Grid>
+
+                        <!-- 账号（下拉）+ 正下方操作按钮 -->
+                        <StackPanel Grid.Row="1" Margin="0,0,0,8">
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                <TextBlock Text="账号" VerticalAlignment="Center" Opacity="0.7" />
+                                <ComboBox ItemsSource="{Binding Gacha.Accounts}"
+                                          SelectedItem="{Binding Gacha.SelectedAccount}"
+                                          MinWidth="150">
+                                    <ComboBox.ItemTemplate>
+                                        <DataTemplate x:DataType="vm:AccountView">
+                                            <TextBlock Text="{Binding Name}" />
+                                        </DataTemplate>
+                                    </ComboBox.ItemTemplate>
+                                </ComboBox>
+                            </StackPanel>
+                            <StackPanel Orientation="Horizontal" Spacing="8" Margin="0,6,0,0">
+                                <Button Content="新建" MinWidth="72" Height="30"
+                                        Command="{Binding Gacha.CreateAccountCommand}" />
+                                <Button Content="{Binding Gacha.DeleteAccountLabel}" MinWidth="72" Height="30"
+                                        Command="{Binding Gacha.DeleteAccountCommand}" />
+                                <Button Content="{Binding Gacha.NameListLabel}" MinWidth="92" Height="30"
+                                        Command="{Binding Gacha.ToggleNameListCommand}" />
+                            </StackPanel>
+                        </StackPanel>
+
+                        <!-- 器者名单管理面板 -->
+                        <Border Grid.Row="2" CornerRadius="6" BorderThickness="1" BorderBrush="#33808080"
+                                Padding="10,8" Margin="0,0,0,8" MaxHeight="220"
+                                IsVisible="{Binding Gacha.IsNameListVisible}">
+                            <StackPanel Spacing="6">
+                                <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="8">
+                                    <TextBlock Text="{Binding Gacha.NameListHeader}" FontWeight="SemiBold"
+                                               VerticalAlignment="Center" TextWrapping="Wrap" />
+                                    <TextBox Grid.Column="1" Text="{Binding Gacha.NewName}" Watermark="新器者名"
+                                             MinWidth="110" />
+                                    <Button Grid.Column="2" Content="添加" MinWidth="56"
+                                            Command="{Binding Gacha.AddNameCommand}" />
+                                </Grid>
+                                <ScrollViewer MaxHeight="150">
+                                    <ItemsControl ItemsSource="{Binding Gacha.NameItems}">
+                                        <ItemsControl.ItemsPanel>
+                                            <ItemsPanelTemplate>
+                                                <WrapPanel />
+                                            </ItemsPanelTemplate>
+                                        </ItemsControl.ItemsPanel>
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate x:DataType="vm:NameItemView">
+                                                <Border Margin="0,2,6,2" Padding="6,2" CornerRadius="4"
+                                                        Background="#22FFFFFF">
+                                                    <StackPanel Orientation="Horizontal" Spacing="4">
+                                                        <TextBlock Text="{Binding Name}" FontSize="12" />
+                                                        <Button Content="×" Padding="2,0" MinWidth="18" Height="18"
+                                                                FontSize="11" Background="Transparent"
+                                                                BorderThickness="0"
+                                                                Command="{Binding DeleteCommand}" />
+                                                    </StackPanel>
+                                                </Border>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                </ScrollViewer>
+                            </StackPanel>
+                        </Border>
+
+
+                        <!-- 抓取日志 -->
+                        <StackPanel Grid.Row="3" Margin="0,0,0,6">
+                            <TextBlock Text="抓取日志" FontWeight="Bold" FontSize="15" />
+                            <TextBlock FontSize="11.5" Opacity="0.55" TextWrapping="Wrap" Margin="0,4,0,0"
+                                       Text="停在游戏【招集记录】页后点「开始抓取」；全程只读浏览，记录与手机端格式兼容，累积在 data 目录。" />
+                        </StackPanel>
+                        <Border Grid.Row="4" CornerRadius="6" BorderThickness="1" BorderBrush="#33808080"
+                                Padding="4">
+                            <ListBox x:Name="GachaLogList" ItemsSource="{Binding Gacha.Logs}">
+                                <ListBox.ItemTemplate>
+                                    <DataTemplate x:DataType="vm:ToolLogLine">
+                                        <TextBlock TextWrapping="Wrap">
+                                            <Run Text="{Binding Time}" Foreground="#66808080" />
+                                            <Run Text="  " />
+                                            <Run Text="{Binding Text}" Foreground="{Binding Color}" />
+                                        </TextBlock>
+                                    </DataTemplate>
+                                </ListBox.ItemTemplate>
+                            </ListBox>
+                        </Border>
+                    </Grid>
+
+
+                    <!-- ===== 右列：抽卡分析 + 每池明细 ===== -->
+                    <Grid Grid.Column="2" RowDefinitions="Auto,*" Margin="0,0,0,4">
+                        <TextBlock Text="库内暂无记录：停在【招集记录】页点「开始抓取」，或用「补录」手动入库"
+                                   Opacity="0.45" HorizontalAlignment="Center"
+                                   VerticalAlignment="Center" TextWrapping="Wrap"
+                                   IsVisible="{Binding !Gacha.HasResult}" />
+                        <ScrollViewer Grid.Row="1" IsVisible="{Binding Gacha.HasResult}">
+                          <StackPanel>
+                            <!-- 抽卡分析：合计 + 每池总览小卡（横向可滚动） -->
+                            <TextBlock Text="抽卡分析" FontWeight="Bold" FontSize="15" />
+                            <TextBlock FontSize="11.5" Opacity="0.55" TextWrapping="Wrap" Margin="0,4,0,8"
+                                       Text="抓取、补录、UP 标注后自动刷新；点特出行「UP」标注该卡池小类的 UP 器者。" />
+                            <ScrollViewer HorizontalScrollBarVisibility="Auto"
+                                          VerticalScrollBarVisibility="Disabled" Margin="0,0,6,10">
+                                <ItemsControl ItemsSource="{Binding Gacha.Overview}">
+                                    <ItemsControl.ItemsPanel>
+                                        <ItemsPanelTemplate>
+                                            <StackPanel Orientation="Horizontal" Spacing="6" />
+                                        </ItemsPanelTemplate>
+                                    </ItemsControl.ItemsPanel>
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate x:DataType="vm:OverviewCardView">
+                                            <Border Width="104" Padding="6,6" CornerRadius="8"
+                                                    BorderThickness="1" BorderBrush="#33808080"
+                                                    Margin="0,0,6,0">
+                                                <StackPanel>
+                                                    <TextBlock Text="{Binding Short}" FontSize="12" FontWeight="SemiBold" />
+                                                    <StackPanel Orientation="Horizontal" Spacing="2">
+                                                        <TextBlock Text="{Binding Total}" FontSize="24" FontWeight="Bold" />
+                                                        <TextBlock Text="抽" FontSize="11" Opacity="0.6"
+                                                                   VerticalAlignment="Bottom" Margin="0,0,0,4" />
+                                                    </StackPanel>
+                                                    <Separator Margin="0,4" />
+                                                    <TextBlock Text="{Binding TeLine}" FontSize="12"
+                                                               Opacity="0.85"
+                                                               Classes.waiLine="{Binding HasWai}" />
+                                                </StackPanel>
+                                            </Border>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </ScrollViewer>
+                            <Separator Margin="0,2,6,10" />
+                            <TextBlock Text="每池明细" FontWeight="Bold" FontSize="15" Margin="0,0,0,8" />
+                            <ItemsControl ItemsSource="{Binding Gacha.Pools}" Margin="0,0,6,0">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate x:DataType="vm:PoolStatsView">
+                                        <Border Margin="0,0,0,10" Padding="12,10" CornerRadius="8"
+                                                BorderThickness="1" BorderBrush="#33808080">
+                                            <StackPanel>
+                                                <Grid ColumnDefinitions="*,Auto">
+                                                    <TextBlock Text="{Binding Pool}" FontWeight="Bold" FontSize="15" />
+                                                    <Button Grid.Column="1" Content="补录" MinWidth="56" Height="26"
+                                                            Padding="8,0" FontSize="12"
+                                                            Command="{Binding Owner.ShowAddFormCommand}"
+                                                            CommandParameter="{Binding Pool}" />
+                                                </Grid>
+                                                <TextBlock Text="{Binding StatsLine}" Margin="0,4,0,0"
+                                                           Opacity="0.85" />
+                                                <TextBlock Text="{Binding UpLine}" Margin="0,2,0,0"
+                                                           FontSize="13" Foreground="#E8B34B"
+                                                           IsVisible="{Binding HasUpLine}" />
+                                                <TextBlock Text="{Binding DianLine}" Margin="0,2,0,0" FontSize="13"
+                                                           Classes.dianWarn="{Binding DianWarn}" />
+                                                <!-- 按卡池小类（招集列）分组的子卡，对标手机端 -->
+                                                <ItemsControl ItemsSource="{Binding Banners}" Margin="0,6,0,0">
+                                                    <ItemsControl.ItemTemplate>
+                                                        <DataTemplate x:DataType="vm:BannerStatsView">
+                                                            <Border Margin="0,6,0,0" Padding="8,6" CornerRadius="6"
+                                                                    Background="#FF151C29">
+                                                                <StackPanel>
+                                                                    <TextBlock Text="{Binding HeadLine}" FontSize="13"
+                                                                               FontWeight="SemiBold" Foreground="#4C9AFF"
+                                                                               TextWrapping="Wrap" />
+                                                                    <TextBlock Text="暂无特出" FontSize="12" Opacity="0.5"
+                                                                               Margin="0,3,0,0"
+                                                                               IsVisible="{Binding !HasTe}" />
+                                                                    <ItemsControl ItemsSource="{Binding TeList}">
+                                                                        <ItemsControl.ItemTemplate>
+                                                                            <DataTemplate x:DataType="vm:TeItemView">
+                                                                                <Grid ColumnDefinitions="Auto,*,Auto,Auto,Auto" Margin="0,3,0,0">
+                                                                                    <TextBlock Text="特出" FontSize="12" FontWeight="Bold"
+                                                                                               Foreground="#E5636F"
+                                                                                               VerticalAlignment="Center" />
+                                                                                    <TextBlock Grid.Column="1" Text="{Binding Name}"
+                                                                                               FontSize="12.5" Margin="8,0,0,0"
+                                                                                               VerticalAlignment="Center" />
+                                                                                    <TextBlock Grid.Column="2" Text="{Binding Time}"
+                                                                                               FontSize="11.5" Opacity="0.5"
+                                                                                               Margin="0,0,10,0"
+                                                                                               VerticalAlignment="Center" />
+                                                                                    <TextBlock Grid.Column="3" Text="{Binding Cost}"
+                                                                                               FontSize="12" Foreground="#E8A33B"
+                                                                                               VerticalAlignment="Center" />
+                                                                                    <Button Grid.Column="4" MinWidth="38" Height="22"
+                                                                                            Padding="6,0" FontSize="11.5" Margin="8,0,0,0"
+                                                                                            Classes.upOn="{Binding IsUp}"
+                                                                                            Command="{Binding MarkCommand}" />
+                                                                                </Grid>
+                                                                            </DataTemplate>
+                                                                        </ItemsControl.ItemTemplate>
+                                                                    </ItemsControl>
+                                                                </StackPanel>
+                                                            </Border>
+                                                        </DataTemplate>
+                                                    </ItemsControl.ItemTemplate>
+                                                </ItemsControl>
+                                                <StackPanel IsVisible="{Binding HasManual}" Margin="0,8,0,0">
+                                                    <TextBlock Text="手动补录" FontWeight="SemiBold" FontSize="13" />
+                                                    <ItemsControl ItemsSource="{Binding ManualList}" Margin="0,2,0,0">
+                                                        <ItemsControl.ItemTemplate>
+                                                            <DataTemplate x:DataType="vm:ManualItemView">
+                                                                <Grid ColumnDefinitions="*,Auto" Margin="0,2,0,0">
+                                                                    <TextBlock Text="{Binding Display}" FontSize="12.5"
+                                                                               Opacity="0.8"
+                                                                               VerticalAlignment="Center" />
+                                                                    <Button Grid.Column="1" Content="删" MinWidth="40" Height="22"
+                                                                            Padding="6,0" FontSize="11.5" Margin="6,0,0,0"
+                                                                            Command="{Binding DeleteCommand}" />
+                                                                </Grid>
+                                                            </DataTemplate>
+                                                        </ItemsControl.ItemTemplate>
+                                                    </ItemsControl>
+                                                </StackPanel>
+                                            </StackPanel>
+                                        </Border>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                          </StackPanel>
+                        </ScrollViewer>
+                    </Grid>
+                </Grid>
+            </TabItem>
+        </TabControl>
+    </Grid>
+</UserControl>

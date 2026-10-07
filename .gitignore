@@ -1,0 +1,38 @@
+# ===== 任务包联接（穿透指向手机端仓库，绝不收录） =====
+/whmx/
+
+# ===== 开发大件 =====
+/_sdk/
+/_dl/
+/debug/
+/logs/
+
+# _build 下只收录壳源码树（排除 NuGet 缓存/产物/源码包）
+/_build/*
+!/_build/MFAAvalonia-2.16.2/
+_build/MFAAvalonia-2.16.2/**/bin/
+_build/MFAAvalonia-2.16.2/**/obj/
+_build/MFAAvalonia-2.16.2/**/*.tar.gz
+
+# ===== 运行时大件与引擎 =====
+/dotnet/
+/libs/
+/runtimes/
+/maafw_runtime/
+/libs_maafw_5.12.3_bak/
+/MaaAgentBinary/
+/plugins/
+
+# ===== 个人数据 =====
+/config/
+/data/
+
+# ===== 发布/临时目录 =====
+/_dist/
+
+# ===== 生成物与二进制 =====
+/interface.json
+*.exe
+*.dll
+*.pdb
+*.node

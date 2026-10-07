@@ -1,0 +1,30 @@
+﻿Add-Type -AssemblyName UIAutomationClient
+Add-Type -AssemblyName UIAutomationTypes
+Add-Type -Namespace Win32 -Name Mouse -MemberDefinition '
+[DllImport("user32.dll")] public static extern bool SetCursorPos(int x, int y);
+[DllImport("user32.dll")] public static extern void mouse_event(uint f, uint dx, uint dy, uint data, UIntPtr extra);'
+$proc = Get-Process MFAAvalonia -ErrorAction Stop
+$root = [System.Windows.Automation.AutomationElement]::FromHandle($proc.MainWindowHandle)
+$wr = $root.Current.BoundingRectangle
+$wx = [double]$wr.X
+$cond = New-Object System.Windows.Automation.PropertyCondition([System.Windows.Automation.AutomationElement]::NameProperty, '小工具')
+$els = $root.FindAll([System.Windows.Automation.TreeScope]::Descendants, $cond)
+Write-Output ("matches: " + $els.Count)
+foreach ($e in $els) {
+  $r = $e.Current.BoundingRectangle
+  Write-Output ("at x=" + [int]$r.X + " y=" + [int]$r.Y + " w=" + [int]$r.Width)
+}
+$side = $null
+foreach ($e in $els) {
+  $r = $e.Current.BoundingRectangle
+  if ([double]$r.X -lt ($wx + 250)) { $side = $e; break }
+}
+if ($side) {
+  $r = $side.Current.BoundingRectangle
+  $cx = [int]($r.X + $r.Width / 2); $cy = [int]($r.Y + $r.Height / 2)
+  [Win32.Mouse]::SetCursorPos($cx, $cy) | Out-Null
+  Start-Sleep -Milliseconds 120
+  [Win32.Mouse]::mouse_event(2, 0, 0, 0, [UIntPtr]::Zero)
+  [Win32.Mouse]::mouse_event(4, 0, 0, 0, [UIntPtr]::Zero)
+  Write-Output ("clicked sidebar item at " + $cx + "," + $cy)
+} else { Write-Output 'no sidebar match' }
