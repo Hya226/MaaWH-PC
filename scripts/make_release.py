@@ -4,7 +4,7 @@ MaaWH-PC 便携版打包：组装解压即用的 zip（供 GitHub Release 上传
 
 用法：python scripts/make_release.py [--installer PATH]
 - 组装 _dist/MaaWH-PC/（运行必需 + 任务包实体 + 一键启动脚本）
-- 压缩为 _dist/MaaWH-PC-v0.2.0.zip
+- 压缩为 _dist/MaaWH-PC-v{VERSION}.zip（改版本号只动下方 VERSION）
 
 运行必需目录：libs / runtimes / dotnet / assets / scripts
 任务包：whmx（实体拷贝，非联接）
@@ -25,7 +25,8 @@ INSTALLER_URL = (
     "https://builds.dotnet.microsoft.com/dotnet/WindowsDesktop/10.0.12/"
     "windowsdesktop-runtime-10.0.12-win-x64.exe"
 )
-ZIP = DIST / "MaaWH-PC-v0.2.0.zip"
+VERSION = "0.2.1"
+ZIP = DIST / f"MaaWH-PC-v{VERSION}.zip"
 
 COPY_DIRS = ["libs", "runtimes", "dotnet", "assets", "scripts"]
 COPY_FILES = [
