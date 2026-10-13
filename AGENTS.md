@@ -82,3 +82,4 @@ E:\MaaWH-PC\
 - **GitHub 直连超时**：release 下载用 `https://ghfast.top/https://github.com/...` 前缀（实测 ~700KB/s）；微软 CDN（builds.dotnet.microsoft.com）国内可直连。
 - **解压 MFAAvalonia zip 的坑**：包内有一个 GBK 编码文件名的 bat，`unzip` 会中途报错退出（已解的文件留在原地，**看似解完实则不完整**）；用 Windows 自带 `C:\Windows\System32\tar.exe -xf`（注意 Git Bash 的 tar 是 GNU 版不认 zip）。校验清单时注意 Windows 原生工具输出带 CRLF，`grep '/$'` 过滤目录项前先 `tr -d '\r'`，否则会误报一堆"缺文件"。
 - **绑定 API 与手机端 JNA 不同名**：连接是 `ctrl.post_connection().wait()`（没有 `connect()`）；截图 `post_screencap().wait()` + `ctrl.cached_image`；Python 包名 `MaaFw`（import 名 `maa`），PyPI 上没有 `maa-framework`。
+- **GitHub Release 发布**：`gh` 未安装，用凭据管理器令牌走 API（`git credential fill` 取 token；api.github.com/uploads.github.com 走本地代理可直连）。★命名约定（用户 2026-10-10 指定）：标题必须是 `MaaWH-PC vX.Y.Z`，**永远不带「便携版」字样**；上传流程 = 提交推送 main → POST `/releases` 建 release（tag=vX.Y.Z，target=main，正文参考 `_dist/_release.json`）→ POST uploads 上传 zip 资产 → PATCH 改名/核验。临时文件放 `_dist/` 别放 `/tmp`（Windows Python 不认 MSYS 路径）。
