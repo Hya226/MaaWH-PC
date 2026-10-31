@@ -7,7 +7,7 @@
 ## 环境要求（本机已就绪）
 
 - MuMu 模拟器（物华弥新定制版，`D:\Program Files\YXWuHuaMiXin-12.0`），adb 地址 `127.0.0.1:16384`
-- 游戏 B 服包已安装并登录过一次（`com.cipaishe.wuhua.bilibili`）
+- 游戏官服包已安装并登录过一次（`com.cipaishe.laigu`，2026-10-31 起 MaaWH 全线使用官服；B 服不再维护）
 - Python 3.12 + `pip install MaaFw==5.14.2`（跑脚本用；GUI 不需要）
 
 ## 用法

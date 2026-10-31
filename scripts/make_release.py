@@ -25,7 +25,7 @@ INSTALLER_URL = (
     "https://builds.dotnet.microsoft.com/dotnet/WindowsDesktop/10.0.12/"
     "windowsdesktop-runtime-10.0.12-win-x64.exe"
 )
-VERSION = "0.2.1"
+VERSION = "0.2.2"
 ZIP = DIST / f"MaaWH-PC-v{VERSION}.zip"
 
 COPY_DIRS = ["libs", "runtimes", "dotnet", "assets", "scripts"]
@@ -52,7 +52,7 @@ NOTE = """MaaWH-PC —— 《物华弥新》PC 端自动化宿主
 
 【环境要求】
 - MuMu 模拟器 12（物华弥新定制版），adb 端口 127.0.0.1:16384
-- 模拟器内游戏已登录（B 服包），保持模拟器开机
+- 模拟器内游戏已登录（官服包 com.cipaishe.laigu），保持模拟器开机
 
 【内置】
 - 任务包 whmx/（全部流程与模板，更新时整体替换本目录并重启）

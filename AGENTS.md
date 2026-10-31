@@ -10,6 +10,7 @@
 - **已验证（GUI）**：MFAAvalonia v2.16.2 装在工程根（与 interface.json 同目录），免系统安装——**.NET 10 运行时**解压在 `dotnet\`，启动脚本/手动启动前 `set DOTNET_ROOT=%~dp0dotnet`（本机只有 .NET 6/7/8，MFAAvalonia 是 net10.0 框架依赖版；deps.json 无 WindowsDesktop 引用，基础 runtime 够用）。GUI 实测：自动加载《物华弥新 v0.2.0》清单、控制器类型=「ADB（PC 端 / 模拟器）」（interface.json 新增的那条预设）、自动识别设备 `物华弥新 (127.0.0.1:16384)`、任务列表 16 项带默认勾选、实时画面出图（FPS ~30）。
 - **EmulatorExtras 观察**：MFAAvalonia 日志出现过「实时画面已连接但无法获取画面 (EmulatorExtras)」→ 已自动回落普通截图方式，实时视图照常出图。MuMu 增强截图（~10ms 级）要 MuMu 窗口非最小化才可用；不强求，普通 adb 截图对流水线足够（模板识别靠引擎而非 GUI 预览）。
 - **分辨率结论**：MuMu 当前 1280x720@240dpi（平板模式），与手机虚拟屏基准 1280x720@320dpi 只有 DPI 差异——**实测无影响**（该游戏 UI 按分辨率像素排版，不按 dp），不要去改 MuMu 配置。若将来真要改：`D:\Program Files\YXWuHuaMiXin-12.0\vms\YXWuHuaMiXin-12.0-0\configs\customer_config.json` 里 `setting.resolution.mode.custom` = `"1280:720:320"`（格式 宽:高:dpi），改完重启模拟器。
+- **官服迁移验证（2026-10-31）**：MuMu 实例 0 装官服 3.4.8（`com.cipaishe.laigu`，带梆梆加固 `com.secneo.apkwrapper.AW`，实测不拦模拟器/adb 注入）→ 无入口冒烟（连+载+截帧）通过 → `VF_启动` 71.4s 成功收口主页，识别失败 0、错误 0；启动链新节点 _19/_20（官服登录页「登录已有角色」OCR）随共享 whmx 自动生效。账号数据从 B 服同步（词牌社通行证关联）。
 - **未验证**：其余 15 个任务在模拟器上的回归（清单见 `python scripts/maawh_pc.py --list`）；**刷体力类任务照搬手机端测试纪律——只验证识别，别跑完整流程**。
 
 ## 一、目录结构
@@ -35,7 +36,7 @@ E:\MaaWH-PC\
 
 ## 二、环境事实（本机）
 
-- **MuMu**：`D:\Program Files\YXWuHuaMiXin-12.0\`（物华弥新游戏定制版），游戏**已预装且 B 服包已登录**：`com.cipaishe.wuhua.bilibili`（与手机端 `MaaConst.GAME_PKG` 一致；模拟器上另有一个 `com.cipaishe.wuhua.google`，别混）。adb 端口 **127.0.0.1:16384**（实例 0；多开每实例 +32）。手机真机 adb 用另一条 `-s 2c92e197`，别搞混。
+- **MuMu**：`D:\Program Files\YXWuHuaMiXin-12.0\`（物华弥新游戏定制版），2026-10-31 全线切**官服**：`com.cipaishe.laigu`（3.4.8，与手机端 `MaaConst.GAME_PKG` 一致，账号已登录；模拟器上另有 `com.cipaishe.wuhua.google` 与 B 服 `com.cipaishe.wuhua.bilibili` 残留，MaaWH 不再操作它们）。adb 端口 **127.0.0.1:16384**（实例 0；多开每实例 +32）。手机真机 adb 用另一条 `-s 2c92e197`，别搞混。
 - **adb**：`D:\android-studio\Sdk\platform-tools\adb.exe`（本机 PATH 没有）。
 - **Python 绑定**：`pip install MaaFw==5.14.2`（注意包名是 `MaaFw` 不是 `maa-framework`；**自带全套二进制** `site-packages/maa/bin`，不依赖解压的 release）。绑定的 API 与手机端 JNA 那套名字不同：连接是 `ctrl.post_connection().wait()`，资源 `res.post_bundle(path).wait().succeeded`，任务 `tasker.post_task(entry).wait().succeeded`，截图 `ctrl.post_screencap().wait()` + `ctrl.cached_image`（numpy BGR）。
 - **GitHub 下载**：直连超时，用镜像 `https://ghfast.top/https://github.com/...`（实测 700KB/s）。
@@ -78,7 +79,7 @@ E:\MaaWH-PC\
 - **别 git init 这个目录**（除非先 .gitignore 掉 `whmx/`）：git 会把联接当普通目录递归，把整个任务包重复收进来。真要建仓先写 `.gitignore`（whmx/、dotnet/、libs/、plugins/、runtimes/、MaaAgentBinary/、logs/、_dl/、maafw_runtime/、interface.json、MFAAvalonia.*）。
 - 删除/搬家 `E:\MaaWH` 会弄断联接，重建：`cmd /c mklink /J E:\MaaWH-PC\whmx E:\MaaWH\whmx`。
 - 引擎日志在 `logs\debug\maafw.log`（Toolkit.init_option 指到 logs\）；识别命中行格式 `reco hit [result.name=xxx]`，模板分在 `"score":0.xxxx`。
-- 游戏在模拟器上首次登录要走一次手动 B 服登录；之后会话保持。公告/活动弹窗与手机端同期可能不同，识别不过先截帧看画面。
+- 游戏在模拟器上首次登录要走一次手动官服（词牌社通行证）登录；之后会话保持。公告/活动弹窗与手机端同期可能不同，识别不过先截帧看画面。官服 APK 带梆梆加固，实测模拟器可正常跑。
 - **GitHub 直连超时**：release 下载用 `https://ghfast.top/https://github.com/...` 前缀（实测 ~700KB/s）；微软 CDN（builds.dotnet.microsoft.com）国内可直连。
 - **解压 MFAAvalonia zip 的坑**：包内有一个 GBK 编码文件名的 bat，`unzip` 会中途报错退出（已解的文件留在原地，**看似解完实则不完整**）；用 Windows 自带 `C:\Windows\System32\tar.exe -xf`（注意 Git Bash 的 tar 是 GNU 版不认 zip）。校验清单时注意 Windows 原生工具输出带 CRLF，`grep '/$'` 过滤目录项前先 `tr -d '\r'`，否则会误报一堆"缺文件"。
 - **绑定 API 与手机端 JNA 不同名**：连接是 `ctrl.post_connection().wait()`（没有 `connect()`）；截图 `post_screencap().wait()` + `ctrl.cached_image`；Python 包名 `MaaFw`（import 名 `maa`），PyPI 上没有 `maa-framework`。
