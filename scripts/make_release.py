@@ -25,7 +25,7 @@ INSTALLER_URL = (
     "https://builds.dotnet.microsoft.com/dotnet/WindowsDesktop/10.0.12/"
     "windowsdesktop-runtime-10.0.12-win-x64.exe"
 )
-VERSION = "0.2.2"
+VERSION = "0.2.3"
 ZIP = DIST / f"MaaWH-PC-v{VERSION}.zip"
 
 COPY_DIRS = ["libs", "runtimes", "dotnet", "assets", "scripts"]
