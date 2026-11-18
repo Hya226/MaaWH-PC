@@ -2030,6 +2030,22 @@ public class MaaProcessor
             tasker = MaaTasker;
         }
 
+        // 【OCR记录】（type=record 清单参数）：识别命中记录节点时归属 OCR 文本。
+        // 独立于 ShowHitDraw 开关；未配置记录节点时 HasMappings=false，零开销。
+        // 用局部兜底引用，不改 tasker 本身的语义（见下方 showHitDraw 块的注释）。
+        if (OcrRecordStore.HasMappings(InstanceId)
+            && args.Message.StartsWith(MaaMsg.Node.Recognition.Succeeded)
+            && jObject["reco_id"] != null
+            && long.TryParse(jObject["reco_id"]?.ToString(), out var recordRecoId)
+            && recordRecoId > 0)
+        {
+            var recordTasker = tasker ?? MaaTasker;
+            if (recordTasker != null)
+            {
+                OcrRecordStore.TryRecord(InstanceId, recordTasker, recordRecoId, callbackName, this);
+            }
+        }
+
         if (tasker != null && showHitDraw)
         {
             var name = jObject["name"]?.ToString() ?? string.Empty;
@@ -3570,6 +3586,8 @@ public class MaaProcessor
             _tempTasks = tasks;
             runId = ViewModel?.BeginTaskRun(tasks) ?? 0;
             LoggerHelper.Info($"准备执行任务队列：任务数量={tasks.Count}");
+            // 【OCR记录】队列开始：清上一轮记录 + 解析清单 record 映射
+            OcrRecordStore.ResetForRun(InstanceId, Interface, this);
             var taskAndParams = tasks.Select((task, index) => CreateNodeAndParam(task, index + 1, runId)).ToList();
             InitializeConnectionTasksAsync(token);
             AddCoreTasksAsync(taskAndParams, token);
@@ -4595,6 +4613,7 @@ public class MaaProcessor
         {
             ToastHelper.Info(LangKeys.TaskFailed.ToLocalization());
             AddLogByKey(LangKeys.TaskFailed, (IBrush?)null);
+            OcrRecordStore.EmitSummary(InstanceId, this);
             ExternalNotificationHelper.ExternalNotificationAsync(Instances.ExternalNotificationSettingsUserControlModel.EnabledCustom
                 ? Instances.ExternalNotificationSettingsUserControlModel.CustomFailureText
                 : LangKeys.TaskFailed.ToLocalization());
@@ -4620,6 +4639,7 @@ public class MaaProcessor
             {
                 var list = _tempTasks.Count > 0 ? _tempTasks : ViewModel?.TaskItemViewModels.ToList() ?? new List<DragItemViewModel>();
                 list.Where(t => t.IsCheckedWithNull == null && !t.IsTaskSupported).ToList().ForEach(d => d.IsCheckedWithNull = false);
+                OcrRecordStore.EmitSummary(InstanceId, this);
 
                 if (_startTime != null)
                 {

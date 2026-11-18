@@ -176,6 +176,10 @@ public class TaskOptionGenerator(TaskQueueViewModel viewModel, Action saveConfig
         // 过滤：根据 option.controller / option.resource 隐藏不适用项（任务 11）
         if (!IsOptionApplicable(interfaceOption)) return;
 
+        // 【OCR记录】（type=record）不是可编辑参数，不在设置面板渲染（运行时由
+        // OcrRecordStore 输出记录值到运行日志），与手机端「面板只渲染只读说明」一致
+        if (string.Equals(interfaceOption.OptionType, "record", StringComparison.OrdinalIgnoreCase)) return;
+
         Control control;
 
         if (interfaceOption.IsHotkey)
@@ -870,7 +874,10 @@ public class TaskOptionGenerator(TaskQueueViewModel viewModel, Action saveConfig
     private void AddSubOption(StackPanel container, MaaInterface.MaaInterfaceSelectOption subOption, DragItemViewModel source)
     {
          if (MaaProcessor.Interface?.Option?.TryGetValue(subOption.Name ?? string.Empty, out var subInterfaceOption) != true) return;
-         
+
+         // 【OCR记录】（type=record）不是可编辑参数，不在设置面板渲染
+         if (string.Equals(subInterfaceOption.OptionType, "record", StringComparison.OrdinalIgnoreCase)) return;
+
          Control control;
          if (subInterfaceOption.IsHotkey)
             control = CreateHotkeyControl(subOption, subInterfaceOption);
