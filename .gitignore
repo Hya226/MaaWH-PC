@@ -38,3 +38,6 @@ _build/MFAAvalonia-2.16.2/**/*.tar.gz
 *.node
 /MFAAvalonia.deps.json
 /MFAAvalonia.runtimeconfig.json
+
+# ===== 壳运行时产物 =====
+/resource/
