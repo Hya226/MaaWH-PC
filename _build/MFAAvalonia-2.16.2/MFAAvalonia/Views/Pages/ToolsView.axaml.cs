@@ -30,6 +30,13 @@ public partial class ToolsView : UserControl
                 Dispatcher.UIThread.Post(() =>
                     GachaLogList.ScrollIntoView(GachaLogList.Items[^1]), DispatcherPriority.Background);
             };
+            Instances.ToolsViewModel.Warehouse.Logs.CollectionChanged += (_, args) =>
+            {
+                if (args.Action != NotifyCollectionChangedAction.Add || WhLogList.ItemCount == 0)
+                    return;
+                Dispatcher.UIThread.Post(() =>
+                    WhLogList.ScrollIntoView(WhLogList.Items[^1]), DispatcherPriority.Background);
+            };
         }
     }
 }

@@ -12,6 +12,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using MFAAvalonia.Extensions.MaaFW;
 using MFAAvalonia.Helper;
+using MaaJobStatus = MaaFramework.Binding.MaaJobStatus;
 
 namespace MFAAvalonia.ViewModels.Pages;
 
@@ -25,6 +26,8 @@ public partial class ToolsViewModel : ObservableObject
     public WaiQinToolViewModel WaiQin { get; } = new();
 
     public GachaToolViewModel Gacha { get; } = new();
+
+    public WarehouseToolViewModel Warehouse { get; } = new();
 
     /// <summary>任一工具运行中（栏目间互斥的依据）</summary>
     [ObservableProperty]
@@ -779,6 +782,244 @@ public partial class GachaToolViewModel : ObservableObject
         return false;
     }
 
+}
+
+/// <summary>仓库材料明细行（数量展示 + 目标数量编辑）</summary>
+public partial class WhMaterialRow : ObservableObject
+{
+    public string Name { get; init; } = string.Empty;
+    /// <summary>数量显示串（保留「万」；空 = 数量识别失败）</summary>
+    public string Qty { get; init; } = string.Empty;
+    /// <summary>与上一份存档相比数量/种类有变化（「仅看变化」过滤依据）</summary>
+    public bool Changed { get; init; }
+
+    /// <summary>目标数量（空 = 未设置；智能刷材料的 targets.json）</summary>
+    [ObservableProperty]
+    private string _target = string.Empty;
+}
+
+/// <summary>
+/// 仓库识别（小工具，手机版 WarehouseTool 的 PC 移植）：一键完成——自动导航
+/// 【物资库】当前所选小仓库页 → 逐页识别全部物品与数量（滑动翻页）→ 完成后
+/// 自动返回主页。三仓（资源/徽章/票券）切换查看明细；支持目标数量编辑
+/// （智能刷材料的 targets.json）与「仅看变化」对比。引擎只负责导航，
+/// 识别由 WarehouseScanner 宿主抓帧完成（与任务列表里的编排任务是同一实现）。
+/// </summary>
+public partial class WarehouseToolViewModel : ObservableObject
+{
+    private CancellationTokenSource? _cts;
+
+    public WarehouseToolViewModel()
+    {
+        RunCommand = new RelayCommand(() => _ = RunOrStopAsync());
+        SaveTargetsCommand = new RelayCommand(SaveTargets);
+        SelectCatCommand = new RelayCommand<string?>(cat => SelectedCat = cat ?? WarehouseData.CatResource);
+        LoadDisplay();
+    }
+
+    public string Intro =>
+        "一键完成：自动导航【物资库】当前所选小仓库页 → 逐页识别全部物品与数量（滑动翻页）→ 完成后自动返回主页；" +
+        "需先在主页连接模拟器且游戏在主页；明细存 data\\warehouse\\<分类>_scan.json";
+
+    public string[] Cats { get; } =
+        [WarehouseData.CatResource, WarehouseData.CatBadge, WarehouseData.CatTicket];
+
+    public string CatDisplay(string cat) => WarehouseData.CatName(cat);
+
+    /// <summary>运行中：按钮变「停止」，防重入</summary>
+    [ObservableProperty]
+    private bool _isRunning;
+
+    [ObservableProperty]
+    private string _statusText = "空闲";
+
+    [ObservableProperty]
+    private string _runLabel = "开始识别";
+
+    [ObservableProperty]
+    private string _selectedCat = WarehouseData.CatResource;
+
+    [ObservableProperty]
+    private string _kindSummary = "尚未识别";
+
+    [ObservableProperty]
+    private string _lastSync = string.Empty;
+
+    [ObservableProperty]
+    private string _changeSummary = string.Empty;
+
+    [ObservableProperty]
+    private bool _showChangedOnly;
+
+    partial void OnIsRunningChanged(bool value)
+    {
+        RunLabel = value ? "停止" : "开始识别";
+        if (Instances.ToolsViewModel is { } tools)
+            tools.IsAnyToolRunning = value;
+    }
+
+    partial void OnSelectedCatChanged(string value) => LoadDisplay();
+
+    partial void OnShowChangedOnlyChanged(bool value) => LoadDisplay();
+
+    public ObservableCollection<ToolLogLine> Logs { get; } = [];
+
+    public ObservableCollection<WhMaterialRow> Materials { get; } = [];
+
+    public IRelayCommand RunCommand { get; }
+
+    public IRelayCommand SaveTargetsCommand { get; }
+
+    public IRelayCommand SelectCatCommand { get; }
+
+    private void Log(string msg, WarehouseScanner.WarehouseLogLevel lv)
+    {
+        var level = lv switch
+        {
+            WarehouseScanner.WarehouseLogLevel.Warn => WaiLogLevel.Warn,
+            WarehouseScanner.WarehouseLogLevel.Success => WaiLogLevel.Success,
+            _ => WaiLogLevel.Info,
+        };
+        // 扫描在后台线程跑，页面集合的更新必须回 UI 线程
+        Dispatcher.UIThread.Post(() =>
+        {
+            Logs.Add(new ToolLogLine
+            {
+                Time = DateTime.Now.ToString("HH:mm:ss"),
+                Text = msg,
+                Level = level,
+            });
+            StatusText = msg;
+        }, DispatcherPriority.Background);
+    }
+
+    private async Task RunOrStopAsync()
+    {
+        if (IsRunning)
+        {
+            _cts?.Cancel();
+            StatusText = "正在停止…（等当前页扫完）";
+            return;
+        }
+
+        _cts = new CancellationTokenSource();
+        IsRunning = true;
+        Logs.Clear();
+        StatusText = "正在连接控制器…";
+        try
+        {
+            var processor = MaaProcessorManager.Instance.Current;
+            if (processor?.ViewModel is { IsRunning: true })
+                throw new InvalidOperationException("主页队列正在运行，请先停止队列再使用小工具");
+            var controller = processor?.GetToolController();
+            if (controller == null || !controller.IsConnected)
+                throw new InvalidOperationException("模拟器未连接：请先在主页连接设备");
+            var tasker = processor.MaaTasker
+                ?? throw new InvalidOperationException("任务器不可用：请先在主页连接设备");
+            var ocr = ToolsViewModel.GetSharedOcrEngine();
+
+            var cat = SelectedCat;
+            var navEntry = cat switch
+            {
+                WarehouseData.CatBadge => "VF_仓库识别徽章",
+                WarehouseData.CatTicket => "VF_仓库识别票券",
+                _ => "VF_仓库识别",
+            };
+            Log($"仓库识别：{WarehouseData.CatName(cat)}——导航到【物资库-{WarehouseData.CatName(cat)}】页…",
+                WarehouseScanner.WarehouseLogLevel.Info);
+            var job = tasker.AppendTask(navEntry, "{}");
+            await Task.Run(() => job.Wait(), _cts.Token);
+            if (job.Status != MaaJobStatus.Succeeded)
+                throw new WarehouseScanner.ScanException("导航失败：未能在游戏内打开物资库对应页（游戏是否已到主页？）");
+
+            var scanner = new WarehouseScanner(
+                cat,
+                () => processor.GetToolController(),
+                () => processor.MaaTasker,
+                ocr,
+                Log);
+            var r = await Task.Run(() => scanner.RunAsync(_cts.Token).GetAwaiter().GetResult(), _cts.Token);
+            WarehouseData.Save(cat, r.Counts);
+            var done = $"完成：{WarehouseData.CatName(cat)}仓库共 {r.Counts.Count} 种（{r.Pages} 页）";
+            Log($"✓ {done}，已保存 data\\warehouse\\{cat}_scan.json", WarehouseScanner.WarehouseLogLevel.Success);
+            StatusText = done;
+            ToastHelper.Success("仓库识别", StatusText);
+        }
+        catch (OperationCanceledException)
+        {
+            StatusText = "已停止";
+            ToastHelper.Info("仓库识别", "已停止");
+        }
+        catch (WarehouseScanner.ScanException ex)
+        {
+            StatusText = "失败";
+            LoggerHelper.Error($"仓库识别失败：{ex.Message}");
+            ToastHelper.Error("仓库识别", ex.Message);
+        }
+        catch (Exception ex)
+        {
+            StatusText = "失败";
+            LoggerHelper.Error($"仓库识别失败：{ex.Message}", ex);
+            ToastHelper.Error("仓库识别", $"运行异常：{ex.Message}");
+        }
+        finally
+        {
+            IsRunning = false;
+            _cts?.Dispose();
+            _cts = null;
+            LoadDisplay();
+        }
+    }
+
+    /// <summary>从存档刷新统计与明细（应用仅看变化过滤；目标值并入行编辑）</summary>
+    public void LoadDisplay()
+    {
+        var snap = WarehouseData.Load(SelectedCat);
+        var targets = WarehouseData.GetTargetsFor(SelectedCat);
+        if (snap == null)
+        {
+            KindSummary = "尚未识别";
+            LastSync = "";
+            ChangeSummary = "";
+            Materials.Clear();
+            return;
+        }
+        KindSummary = $"共 {snap.Counts.Count} 种物品";
+        LastSync = string.IsNullOrEmpty(snap.ScannedAt) ? "" : $"上次同步：{snap.ScannedAt}";
+        ChangeSummary = snap.ChangedFromPrev > 0
+            ? $"较上次：{snap.ChangedFromPrev} 种有变化"
+            : "较上次：无变化";
+        Materials.Clear();
+        foreach (var kv in snap.Counts.OrderBy(kv => kv.Key, StringComparer.Ordinal))
+        {
+            var prev = snap.PrevCounts.TryGetValue(kv.Key, out var p) ? p : "";
+            var changed = prev != kv.Value;
+            if (ShowChangedOnly && !changed) continue;
+            Materials.Add(new WhMaterialRow
+            {
+                Name = kv.Key,
+                Qty = string.IsNullOrWhiteSpace(kv.Value) ? "x?" : "×" + kv.Value,
+                Changed = changed,
+                Target = targets.TryGetValue(kv.Key, out var t) && t > 0 ? t.ToString() : "",
+            });
+        }
+    }
+
+    /// <summary>保存所选仓的目标数量（智能刷材料读取；清空 = 取消该材料目标）</summary>
+    private void SaveTargets()
+    {
+        var dict = new Dictionary<string, long>();
+        foreach (var row in Materials)
+        {
+            if (!long.TryParse(row.Target?.Trim(), System.Globalization.NumberStyles.None,
+                    System.Globalization.CultureInfo.InvariantCulture, out var v)) continue;
+            dict[row.Name] = v;
+        }
+        WarehouseData.SetTargetsFor(SelectedCat, dict);
+        ToastHelper.Success("目标配置",
+            $"{WarehouseData.CatName(SelectedCat)}仓库目标已保存（{dict.Count} 项，供智能刷材料使用）");
+        LoadDisplay();
+    }
 }
 
 /// <summary>字符串扩展（面板展示用）</summary>

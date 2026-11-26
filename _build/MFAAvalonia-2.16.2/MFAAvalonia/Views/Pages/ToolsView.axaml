@@ -321,6 +321,84 @@
                     </Grid>
                 </Grid>
             </TabItem>
+
+            <!-- ============ 仓库识别 ============ -->
+            <TabItem Header="仓库识别">
+                <Grid Margin="4,12,4,0" RowDefinitions="Auto,Auto,Auto,*">
+                    <!-- 顶行：开始/停止 + 状态 + 说明 + 保存目标 -->
+                    <Grid ColumnDefinitions="Auto,*,Auto" Margin="0,0,0,8">
+                        <Button Content="{Binding Warehouse.RunLabel}" MinWidth="88"
+                                Command="{Binding Warehouse.RunCommand}" />
+                        <StackPanel Grid.Column="1" Margin="12,0,8,0" VerticalAlignment="Center">
+                            <TextBlock Text="{Binding Warehouse.StatusText}" FontWeight="SemiBold"
+                                       TextTrimming="CharacterEllipsis" />
+                            <TextBlock Text="{Binding Warehouse.Intro}" Opacity="0.65" FontSize="12"
+                                       TextWrapping="Wrap" />
+                        </StackPanel>
+                        <Button Grid.Column="2" Content="保存目标" MinWidth="76"
+                                VerticalAlignment="Center"
+                                Command="{Binding Warehouse.SaveTargetsCommand}" />
+                    </Grid>
+
+                    <!-- 三仓切换 + 统计 + 仅看变化 -->
+                    <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,0,0,8">
+                        <Button Content="资源" MinWidth="72" Margin="0,0,8,0"
+                                Command="{Binding Warehouse.SelectCatCommand}" CommandParameter="resource" />
+                        <Button Content="徽章" MinWidth="72" Margin="0,0,8,0"
+                                Command="{Binding Warehouse.SelectCatCommand}" CommandParameter="badge" />
+                        <Button Content="票券" MinWidth="72" Margin="0,0,16,0"
+                                Command="{Binding Warehouse.SelectCatCommand}" CommandParameter="ticket" />
+                        <TextBlock Text="{Binding Warehouse.KindSummary}" FontWeight="Bold"
+                                   VerticalAlignment="Center" />
+                        <TextBlock Text="{Binding Warehouse.LastSync}" Margin="16,0,0,0"
+                                   VerticalAlignment="Center" Opacity="0.7" />
+                        <TextBlock Text="{Binding Warehouse.ChangeSummary}" Margin="16,0,0,0"
+                                   VerticalAlignment="Center" Opacity="0.7" />
+                        <CheckBox Content="仅看变化" IsChecked="{Binding Warehouse.ShowChangedOnly}"
+                                  Margin="16,0,0,0" VerticalAlignment="Center" />
+                    </StackPanel>
+
+                    <TextBlock Grid.Row="2" Margin="0,0,0,6" FontSize="11.5" Opacity="0.55"
+                               TextWrapping="Wrap"
+                               Text="识别基于图标模板库（assets/warehouse/ 内置），新物品需补充图标后重新识别；明细行右侧可填目标数量（智能刷材料用），填完点右上「保存目标」。" />
+
+                    <!-- 左：运行日志 | 右：明细与目标编辑 -->
+                    <Grid Grid.Row="3" ColumnDefinitions="*,10,340">
+                        <Border CornerRadius="6" BorderThickness="1" BorderBrush="#33808080"
+                                Padding="4">
+                            <ListBox x:Name="WhLogList" ItemsSource="{Binding Warehouse.Logs}">
+                                <ListBox.ItemTemplate>
+                                    <DataTemplate x:DataType="vm:ToolLogLine">
+                                        <TextBlock TextWrapping="Wrap">
+                                            <Run Text="{Binding Time}" Foreground="#66808080" />
+                                            <Run Text="  " />
+                                            <Run Text="{Binding Text}" Foreground="{Binding Color}" />
+                                        </TextBlock>
+                                    </DataTemplate>
+                                </ListBox.ItemTemplate>
+                            </ListBox>
+                        </Border>
+
+                        <Grid Grid.Column="2">
+                            <ListBox ItemsSource="{Binding Warehouse.Materials}">
+                                <ListBox.ItemTemplate>
+                                    <DataTemplate x:DataType="vm:WhMaterialRow">
+                                        <Grid ColumnDefinitions="*,Auto,Auto" Margin="0,2">
+                                            <TextBlock Text="{Binding Name}" VerticalAlignment="Center"
+                                                       TextTrimming="CharacterEllipsis" />
+                                            <TextBlock Grid.Column="1" Text="{Binding Qty}" Width="86"
+                                                       TextAlignment="Right" Margin="8,0"
+                                                       VerticalAlignment="Center" />
+                                            <TextBox Grid.Column="2" Text="{Binding Target}" Width="76"
+                                                     Watermark="目标" />
+                                        </Grid>
+                                    </DataTemplate>
+                                </ListBox.ItemTemplate>
+                            </ListBox>
+                        </Grid>
+                    </Grid>
+                </Grid>
+            </TabItem>
         </TabControl>
     </Grid>
 </UserControl>

@@ -242,6 +242,63 @@ public static class WarehouseData
         return outMap;
     }
 
+    /// <summary>读所选小仓库段的目标（未设置返回空表）</summary>
+    public static Dictionary<string, long> GetTargetsFor(string cat)
+    {
+        var outMap = new Dictionary<string, long>();
+        try
+        {
+            var f = Path.Combine(DataDir, "targets.json");
+            if (!File.Exists(f)) return outMap;
+            using var doc = JsonDocument.Parse(File.ReadAllText(f));
+            if (doc.RootElement.TryGetProperty(cat, out var seg) && seg.ValueKind == JsonValueKind.Object)
+                foreach (var n in seg.EnumerateObject())
+                    if (n.Value.TryGetInt64(out var v) && v > 0)
+                        outMap[n.Name] = v;
+        }
+        catch
+        {
+        }
+        return outMap;
+    }
+
+    /// <summary>保存所选小仓库段的目标（保留其他仓段；数量 ≤0 视为清除）</summary>
+    public static void SetTargetsFor(string cat, Dictionary<string, long> targets)
+    {
+        try
+        {
+            Directory.CreateDirectory(DataDir);
+            var root = new Dictionary<string, Dictionary<string, long>>();
+            var f = Path.Combine(DataDir, "targets.json");
+            if (File.Exists(f))
+            {
+                try
+                {
+                    using var doc = JsonDocument.Parse(File.ReadAllText(f));
+                    foreach (var c in doc.RootElement.EnumerateObject())
+                    {
+                        if (c.Name == cat || c.Value.ValueKind != JsonValueKind.Object) continue;
+                        var seg = new Dictionary<string, long>();
+                        foreach (var n in c.Value.EnumerateObject())
+                            if (n.Value.TryGetInt64(out var v) && v > 0)
+                                seg[n.Name] = v;
+                        root[c.Name] = seg;
+                    }
+                }
+                catch
+                {
+                }
+            }
+            var clean = targets.Where(kv => kv.Value > 0).ToDictionary(kv => kv.Key, kv => kv.Value);
+            if (clean.Count > 0) root[cat] = clean;
+            else root.Remove(cat);
+            File.WriteAllText(f, JsonSerializer.Serialize(root, JsonOpts));
+        }
+        catch
+        {
+        }
+    }
+
     /// <summary>三仓识别缓存合并（同名材料以 resource 为准；读取失败的分仓静默跳过）</summary>
     public static Dictionary<string, long> LoadInventory()
     {
