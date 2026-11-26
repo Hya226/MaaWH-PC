@@ -70,6 +70,7 @@ E:\MaaWH-PC\
 ## 四、与手机端的边界（重要）
 
 1. **改任务只改一处**：流水线/模板/清单都在 `E:\MaaWH\whmx`（或经流程编辑器回写），PC 端通过联接直接吃。唯一不能共享的是 `interface.json` 的 resource 路径，已用生成脚本解决。
+   **编排型任务过滤（2026-11-26 起）**：手机端出现了「宿主编排型」任务——清单里 entry 只是名字，任务包 pipeline 无对应入口节点，手机端 QueueRunner 代码特判依次调度原子流程（「仓库识别」=三仓依次识别、「智能刷材料」=读缺口循环刷关）。PC 壳没有这套编排，直接跑必报节点不存在，故 `sync_interface.py` 维护 `ORCHESTRATED_TASKS` 名单在生成 PC 版清单时剔除（专属 option 保留不删）。**手机端将来新增编排型任务（QueueRunner 里再出现 entry 特判分支）时，要同步登记该名单**。
 2. **whmx/interface.json 的 controller 段**（2026-10-06 加了 `"Adb"` 预设）：手机端 TaskPack 完全不解析该字段，加了不影响手机；PC/通用壳用它识别控制器类型。
 3. **模板基准**：1280x720（虚拟屏帧 = 模拟器帧，同分辨率）。以后做新模板在两边都通用，不用做两套。
 4. **不移植的 App 侧功能**：抽卡记录抓取（App 侧 OCR 基建）、定时任务（手机端 ScheduleManager；PC 可用 MFAAvalonia 自带定时或 Windows 计划任务调 `scripts/maawh_pc.py`）、虚拟屏预览/悬浮窗（PC 直接看模拟器窗口）。
