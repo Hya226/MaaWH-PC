@@ -4346,6 +4346,20 @@ public class MaaProcessor
     {
         foreach (var task in taskAndParams)
         {
+            // 【宿主编排型任务】（仓库识别/智能刷材料）：清单 entry 在 pipeline 里没有
+            // 同名节点，引擎 post 必失败——改道宿主编排执行（手机端 QueueRunner 同款特判）
+            if (OrchestratedTasks.IsOrchestrated(task.Entry))
+            {
+                var orchestratedEntry = task.Entry;
+                TaskQueue.Enqueue(CreateMaaFWTask(task.Name,
+                    async () =>
+                    {
+                        token.ThrowIfCancellationRequested();
+                        return await OrchestratedTasks.RunAsync(this, orchestratedEntry, token);
+                    }, task.Count ?? 1, task.SourceItem, task.RunId
+                ));
+                continue;
+            }
             TaskQueue.Enqueue(CreateMaaFWTask(task.Name,
                 async () =>
                 {

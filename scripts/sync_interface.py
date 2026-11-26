@@ -14,11 +14,10 @@ ROOT = Path(__file__).resolve().parent.parent
 SRC = ROOT / "whmx" / "interface.json"
 DST = ROOT / "interface.json"
 
-# PC 端暂不支持的任务：宿主编排型。清单里 entry 只是名字，任务包 pipeline 没有
-# 对应入口节点——手机端由 QueueRunner 代码特判依次调度原子流程（仓库识别=三仓
-# 依次识别、智能刷材料=读缺口循环刷关），PC 壳没有这套编排，留着只会点了必失败。
-# 手机端将来新增编排型任务时，在此名单同步登记。
-ORCHESTRATED_TASKS = {"仓库识别", "智能刷材料"}
+# PC 端已支持编排型任务（壳补丁四，2026-11-26：仓库识别/智能刷材料由
+# Helper/OrchestratedTasks.cs 在队列里特判宿主编排）。手机端将来若再新增
+# 「QueueRunner 代码特判、pipeline 无入口节点」的任务，把名字加进来即可剔除。
+ORCHESTRATED_TASKS: set = set()
 
 
 def main() -> int:
